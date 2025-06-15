@@ -1,0 +1,207 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Caracas Alcon Barber 💈</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; }
+    body {
+      background: linear-gradient(#000000d0, #0f0f0fd0), url('https://i.imgur.com/OvMZBs9.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+      padding: 1rem;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2em;
+      margin-bottom: 1rem;
+      text-shadow: 2px 2px #000;
+    }
+    .turno {
+      background: #1e1e2f;
+      padding: 1rem;
+      border-radius: 10px;
+      margin: 1rem 0;
+      box-shadow: 0 0 10px #0ff;
+    }
+    button {
+      background: #0ff;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin-top: 0.5rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .panel-icon {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: #0ff;
+      padding: 0.5rem;
+      border-radius: 50%;
+    }
+    .precio-box, .encuesta, .creditos {
+      margin-top: 2rem;
+      background: #1e1e2f;
+      padding: 1rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #0ff;
+    }
+    .whatsapp-btn {
+      background: #25D366;
+      color: white;
+      display: inline-block;
+      margin-top: 10px;
+    }
+    .compartir-btn {
+      background: #4267B2;
+      color: white;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Bienvenido a Caracas Alcon Barber – Calidad, Estilo y Flow</h1>
+
+  <a class="whatsapp-btn" href="https://wa.me/573167530191?text=Hola%2C%20quiero%20agendar%20un%20turno" target="_blank">
+    Agenda por WhatsApp
+  </a>
+
+  <div id="turnos"></div>
+
+  <div class="precio-box">
+    <h2>💈 Precios</h2>
+    <ul>
+      <li>Corte con diseño: $20.000</li>
+      <li>Corte con barba: $28.000</li>
+      <li>Corte para niños: $18.000</li>
+    </ul>
+  </div>
+
+  <div class="encuesta">
+    <h2>📝 Encuesta de Satisfacción</h2>
+    <label>¿Te gustó el servicio?</label><br>
+    <select id="opinion">
+      <option value="Excelente">Excelente</option>
+      <option value="Bueno">Bueno</option>
+      <option value="Regular">Regular</option>
+      <option value="Malo">Malo</option>
+    </select><br><br>
+    <button onclick="enviarEncuesta()">Enviar</button>
+  </div>
+
+  <button class="compartir-btn" onclick="compartir()">📤 Compartir</button>
+
+  <div class="creditos">
+    <p>Hecho para Caracas | ChatGPT & Kevin Flórez</p>
+  </div>
+
+  <div class="panel-icon" onclick="abrirPanel()">⚙️</div>
+
+  <script>
+    const turnos = [
+      "8:00 AM", "8:40 AM", "9:20 AM", "10:00 AM", "10:40 AM", "11:20 AM",
+      "2:00 PM", "2:40 PM", "3:20 PM", "4:00 PM", "4:40 PM", "5:20 PM",
+      "6:00 PM", "6:40 PM", "7:20 PM"
+    ];
+    const dias = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+    const hoy = new Date();
+    const diaActual = dias[hoy.getDay()];
+    const horaActual = hoy.getHours();
+
+    const guardados = JSON.parse(localStorage.getItem("turnos")) || {};
+
+    function renderTurnos() {
+      const contenedor = document.getElementById("turnos");
+      contenedor.innerHTML = "";
+      if (diaActual === "miércoles") {
+        contenedor.innerHTML = "<p>Hoy no se atiende.</p>";
+        return;
+      }
+      const limite = diaActual === "domingo" ? "6:40 PM" : "7:20 PM";
+      for (let hora of turnos) {
+        if (diaActual === "domingo" && hora > limite) continue;
+        const ocupado = guardados[hora];
+        const div = document.createElement("div");
+        div.className = "turno";
+        div.innerHTML = ocupado ?
+          `<strong>${hora}:</strong> Ocupado por ${ocupado}<br><button onclick="eliminarTurno('${hora}')">❌ Eliminar</button>` :
+          `<strong>${hora}:</strong> Disponible<br><button onclick="agendarTurno('${hora}')">✅ Agendar</button>`;
+        contenedor.appendChild(div);
+      }
+    }
+
+    function agendarTurno(hora) {
+      const nombre = prompt("Tu nombre:");
+      if (!nombre) return;
+      const numero = prompt("Tu número de WhatsApp:");
+      if (!numero) return;
+      guardados[hora] = `${nombre} (${numero})`;
+      localStorage.setItem("turnos", JSON.stringify(guardados));
+      alert("Turno agendado.");
+      enviarWhatsapp(`🔔 NUEVO TURNO\nHora: ${hora}\nNombre: ${nombre}\nWhatsApp: ${numero}`);
+      renderTurnos();
+    }
+
+    function eliminarTurno(hora) {
+      if (!confirm("¿Seguro que quieres eliminar este turno?")) return;
+      const nombre = guardados[hora];
+      delete guardados[hora];
+      localStorage.setItem("turnos", JSON.stringify(guardados));
+      enviarWhatsapp(`⚠️ El turno de las ${hora} (${nombre}) fue eliminado. No se podrá atender.`);
+      renderTurnos();
+    }
+
+    function enviarWhatsapp(mensaje) {
+      const url = `https://wa.me/573167530191?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, "_blank");
+    }
+
+    function enviarEncuesta() {
+      const valor = document.getElementById("opinion").value;
+      alert("Gracias por tu opinión: " + valor);
+      enviarWhatsapp("📝 Opinión del cliente: " + valor);
+    }
+
+    function compartir() {
+      const mensaje = `💈 Caracas Alcon Barber – Agenda tu corte con estilo aquí:\n${window.location.href}`;
+      if (navigator.share) {
+        navigator.share({
+          title: 'Caracas Alcon Barber 💈',
+          text: mensaje,
+          url: window.location.href
+        });
+      } else {
+        navigator.clipboard.writeText(mensaje)
+          .then(() => alert("Enlace copiado. Puedes compartirlo en WhatsApp o redes."))
+          .catch(() => alert("Tu navegador no permite copiar automáticamente."));
+      }
+    }
+
+    function abrirPanel() {
+      const pass = prompt("Contraseña del panel:");
+      if (pass === "caracas123") {
+        let datos = "🔒 Turnos agendados:\n\n";
+        if (Object.keys(guardados).length === 0) datos += "No hay turnos agendados.\n";
+        for (let [hora, nombre] of Object.entries(guardados)) {
+          datos += `🕒 ${hora} – ${nombre}\n`;
+        }
+        alert(datos || "No hay turnos agendados.");
+      } else {
+        alert("Contraseña incorrecta.");
+      }
+    }
+
+    renderTurnos();
+  </script>
+
+  <div style="margin-top: 3rem; text-align: center;">
+    <h3>El dueño – Caracas 💈</h3>
+    <img src="https://i.imgur.com/ux0Sl1B.jpg" alt="Dueño de los cortes" style="width: 200px; border-radius: 15px; box-shadow: 0 0 10px #0ff;">
+  </div>
+</body>
+</html>
+
